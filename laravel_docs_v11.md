@@ -7845,6 +7845,20 @@ If you are updating database records while chunking results, your chunk results 
             }
         });
 
+Since the `chunkById` and `lazyById` methods add their own "where" conditions to the query being executed, you should typically [logically group](#logical-grouping) your own conditions within a closure:
+
+```php
+DB::table('users')->where(function ($query) {
+    $query->where('credits', 1)->orWhere('credits', 2);
+})->chunkById(100, function (Collection $users) {
+    foreach ($users as $user) {
+        DB::table('users')
+          ->where('id', $user->id)
+          ->update(['credits' => 3]);
+    }
+});
+```
+
 > [!WARNING]  
 > When updating or deleting records inside the chunk callback, any changes to the primary key or foreign keys could affect the chunk query. This could potentially result in records not being included in the chunked results.
 
@@ -10628,8 +10642,8 @@ This table provides a quick reference to all of the Laravel contracts and their 
 
 - [Introduction](#introduction)
 - [Defining Relationships](#defining-relationships)
-    - [One to One](#one-to-one)
-    - [One to Many](#one-to-many)
+    - [One to One / Has One](#one-to-one)
+    - [One to Many / Has Many](#one-to-many)
     - [One to Many (Inverse) / Belongs To](#one-to-many-inverse)
     - [Has One of Many](#has-one-of-many)
     - [Has One Through](#has-one-through)
@@ -10694,7 +10708,7 @@ Eloquent relationships are defined as methods on your Eloquent model classes. Si
 But, before diving too deep into using relationships, let's learn how to define each type of relationship supported by Eloquent.
 
 <a name="one-to-one"></a>
-### One to One
+### One to One / Has One
 
 A one-to-one relationship is a very basic type of database relationship. For example, a `User` model might be associated with one `Phone` model. To define this relationship, we will place a `phone` method on the `User` model. The `phone` method should call the `hasOne` method and return its result. The `hasOne` method is available to your model via the model's `Illuminate\Database\Eloquent\Model` base class:
 
@@ -10774,7 +10788,7 @@ If the parent model does not use `id` as its primary key, or you wish to find th
     }
 
 <a name="one-to-many"></a>
-### One to Many
+### One to Many / Has Many
 
 A one-to-many relationship is used to define relationships where a single model is the parent to one or more child models. For example, a blog post may have an infinite number of comments. Like all other Eloquent relationships, one-to-many relationships are defined by defining a method on your Eloquent model:
 
@@ -14429,7 +14443,7 @@ For all Laravel releases, bug fixes are provided for 18 months and security fixe
 | 9 | 8.0 - 8.2 | February 8th, 2022 | August 8th, 2023 | February 6th, 2024 |
 | 10 | 8.1 - 8.3 | February 14th, 2023 | August 6th, 2024 | February 4th, 2025 |
 | 11 | 8.2 - 8.3 | March 12th, 2024 | September 3rd, 2025 | March 12th, 2026 |
-| 12 | 8.2 - 8.3 | Q1 2025 | Q3, 2026 | Q1, 2027 |
+| 12 | 8.2 - 8.3 | Q1 2025 | Q3 2026 | Q1 2027 |
 
 </div>
 
@@ -22543,6 +22557,19 @@ Flight::where('departed', true)
     ->chunkById(200, function (Collection $flights) {
         $flights->each->update(['departed' => false]);
     }, $column = 'id');
+```
+
+Since the `chunkById` and `lazyById` methods add their own "where" conditions to the query being executed, you should typically [logically group](/docs/{{version}}/queries#logical-grouping) your own conditions within a closure:
+
+```php
+Flight::where(function ($query) {
+    $query->where('delayed', true)->orWhere('cancelled', true);
+})->chunkById(200, function (Collection $flights) {
+    $flights->each->update([
+        'departed' => false,
+        'cancelled' => true
+    ]);
+}, column: 'id');
 ```
 
 <a name="chunking-using-lazy-collections"></a>
@@ -66770,7 +66797,7 @@ $user->features()->unless('new-api',
 <a name="blade-directive"></a>
 ### Blade Directive
 
-To make checking features in Blade a seamless experience, Pennant offers a `@feature` directive:
+To make checking features in Blade a seamless experience, Pennant offers the `@feature` and `@featureany` directive:
 
 ```blade
 @feature('site-redesign')
@@ -66778,6 +66805,10 @@ To make checking features in Blade a seamless experience, Pennant offers a `@fea
 @else
     <!-- 'site-redesign' is inactive -->
 @endfeature
+
+@featureany(['site-redesign', 'beta'])
+    <!-- 'site-redesign' or `beta` is active -->
+@endfeatureany
 ```
 
 <a name="middleware"></a>

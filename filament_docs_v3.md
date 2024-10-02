@@ -945,6 +945,7 @@ Add Tailwind's CSS layers to your `resources/css/app.css`:
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@tailwind variants;
 ```
 
 Create a `postcss.config.js` file in the root of your project and register Tailwind CSS, PostCSS Nesting and Autoprefixer as plugins:
@@ -7958,6 +7959,7 @@ Add Tailwind's CSS layers to your `resources/css/app.css`:
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@tailwind variants;
 ```
 
 Create a `postcss.config.js` file in the root of your project and register Tailwind CSS, PostCSS Nesting and Autoprefixer as plugins:
@@ -13259,7 +13261,7 @@ livewire(EditPost::class, ['record' => $post])
 $undoRepeaterFake();
 ```
 
-You may also find it useful to access test the number of items in a repeater by passing a function to the `assertFormSet()` method:
+You may also find it useful to test the number of items in a repeater by passing a function to the `assertFormSet()` method:
 
 ```php
 use Filament\Forms\Components\Repeater;
@@ -25384,6 +25386,7 @@ Add Tailwind's CSS layers to your `resources/css/app.css`:
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@tailwind variants;
 ```
 
 Create a `postcss.config.js` file in the root of your project and register Tailwind CSS, PostCSS Nesting and Autoprefixer as plugins:
@@ -34662,6 +34665,7 @@ Add Tailwind's CSS layers to your `resources/css/app.css`:
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@tailwind variants;
 ```
 
 Create a `postcss.config.js` file in the root of your project and register Tailwind CSS, PostCSS Nesting and Autoprefixer as plugins:
@@ -37338,6 +37342,7 @@ Add Tailwind's CSS layers to your `resources/css/app.css`:
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@tailwind variants;
 ```
 
 Create a `postcss.config.js` file in the root of your project and register Tailwind CSS, PostCSS Nesting and Autoprefixer as plugins:
@@ -37811,6 +37816,7 @@ Add Tailwind's CSS layers to your `resources/css/app.css`:
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@tailwind variants;
 ```
 
 Create a `postcss.config.js` file in the root of your project and register Tailwind CSS, PostCSS Nesting and Autoprefixer as plugins:

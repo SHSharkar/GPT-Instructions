@@ -11025,6 +11025,16 @@ RichEditor::make('content')
 
 <AutoScreenshot name="forms/fields/rich-editor/simple" alt="Rich editor" version="3.x" />
 
+## Security
+
+By default, the editor outputs raw HTML, and sends it to the backend. Attackers are able to intercept the value of the component and send a different raw HTML string to the backend. As such, it is important that when outputting the HTML from a rich editor, it is sanitized; otherwise your site may be exposed to Cross-Site Scripting (XSS) vulnerabilities.
+
+When Filament outputs raw HTML from the database in components such as `TextColumn` and `TextEntry`, it sanitizes it to remove any dangerous JavaScript. However, if you are outputting the HTML from a rich editor in your own Blade view, this is your responsibility. One option is to use Filament's `sanitizeHtml()` helper to do this, which is the same tool we use to sanitize HTML in the components mentioned above:
+
+```blade
+{!! str($record->content)->sanitizeHtml() !!}
+```
+
 ## Customizing the toolbar buttons
 
 You may set the toolbar buttons for the editor using the `toolbarButtons()` method. The options shown here are the defaults. In addition to these, `'h1'` is also available:
@@ -11076,6 +11086,17 @@ RichEditor::make('content')
     ->fileAttachmentsDisk('s3')
     ->fileAttachmentsDirectory('attachments')
     ->fileAttachmentsVisibility('private')
+```
+
+## Disabling Grammarly checks
+
+If the user has Grammarly installed and you would like to prevent it from analyzing the contents of the editor, you can use the `disableGrammarly()` method:
+
+```php
+use Filament\Forms\Components\RichEditor;
+
+RichEditor::make('content')
+    ->disableGrammarly()
 ```
 
 
@@ -11332,6 +11353,16 @@ MarkdownEditor::make('content')
 ```
 
 <AutoScreenshot name="forms/fields/markdown-editor/simple" alt="Markdown editor" version="3.x" />
+
+## Security
+
+By default, the editor outputs raw Markdown and HTML, and sends it to the backend. Attackers are able to intercept the value of the component and send a different raw HTML string to the backend. As such, it is important that when outputting the HTML from a Markdown editor, it is sanitized; otherwise your site may be exposed to Cross-Site Scripting (XSS) vulnerabilities.
+
+When Filament outputs raw HTML from the database in components such as `TextColumn` and `TextEntry`, it sanitizes it to remove any dangerous JavaScript. However, if you are outputting the HTML from a Markdown editor in your own Blade view, this is your responsibility. One option is to use Filament's `sanitizeHtml()` helper to do this, which is the same tool we use to sanitize HTML in the components mentioned above:
+
+```blade
+{!! str($record->content)->markdown()->sanitizeHtml() !!}
+```
 
 ## Customizing the toolbar buttons
 
@@ -12644,6 +12675,21 @@ Repeater::make('members')
         // ...
     ])
     ->addActionLabel('Add member')
+```
+
+### Aligning the add action button
+
+By default, the add action is aligned in the center. You may adjust this using the `addActionAlignment()` method, passing an `Alignment` option of `Alignment::Start` or `Alignment::End`:
+
+```php
+use Filament\Forms\Components\Repeater;
+use Filament\Support\Enums\Alignment;
+
+Repeater::make('members')
+    ->schema([
+        // ...
+    ])
+    ->addActionAlignment(Alignment::Start)
 ```
 
 ### Preventing the user from adding items
@@ -15426,7 +15472,7 @@ You may create your own custom component classes and views, which you can reuse 
 
 > If you're just creating a simple custom component to use once, you could instead use a [view component](#view-components) to render any custom Blade file.
 
-To create a custom column class and view, you may use the following command:
+To create a custom component class and view, you may use the following command:
 
 ```bash
 php artisan make:form-layout Wizard
@@ -21178,7 +21224,7 @@ public function getTabs(): array
 You can add icons to the tabs by passing an [icon](https://blade-ui-kit.com/blade-icons?set=1#search) into the `icon()` method of the tab:
 
 ```php
-use Filament\Resources\Components\Tab;
+use use Filament\Resources\Components\Tab;
 
 Tab::make()
     ->icon('heroicon-m-user-group')
@@ -24741,6 +24787,8 @@ public function panel(Panel $panel): Panel
 }
 ```
 
+Before these [assets](../support/assets) can be used, you'll need to run `php artisan filament:assets`.
+
 ## Applying middleware
 
 You can apply extra middleware to all routes by passing an array of middleware classes to the `middleware()` method in the configuration:
@@ -27924,7 +27972,7 @@ You may create your own custom component classes and views, which you can reuse 
 
 > If you're just creating a simple custom component to use once, you could instead use a [view component](#view) to render any custom Blade file.
 
-To create a custom column class and view, you may use the following command:
+To create a custom component class and view, you may use the following command:
 
 ```bash
 php artisan make:infolist-layout Box
@@ -29080,6 +29128,8 @@ FilamentView::registerRenderHook(
 - `PanelsRenderHook::PAGE_SUB_NAVIGATION_END_BEFORE` - Before the page sub navigation "end" sidebar position, also [can be scoped](#scoping-render-hooks) to the page or resource class
 - `PanelsRenderHook::PAGE_SUB_NAVIGATION_SELECT_AFTER` - After the page sub navigation select (for mobile), also [can be scoped](#scoping-render-hooks) to the page or resource class
 - `PanelsRenderHook::PAGE_SUB_NAVIGATION_SELECT_BEFORE` - Before the page sub navigation select (for mobile), also [can be scoped](#scoping-render-hooks) to the page or resource class
+- `PanelsRenderHook::PAGE_SUB_NAVIGATION_SIDEBAR_AFTER` - After the page sub navigation sidebar, also [can be scoped](#scoping-render-hooks) to the page or resource class
+- `PanelsRenderHook::PAGE_SUB_NAVIGATION_SIDEBAR_BEFORE` - Before the page sub navigation sidebar, also [can be scoped](#scoping-render-hooks) to the page or resource class
 - `PanelsRenderHook::PAGE_SUB_NAVIGATION_START_AFTER` - After the page sub navigation "start" sidebar position, also [can be scoped](#scoping-render-hooks) to the page or resource class
 - `PanelsRenderHook::PAGE_SUB_NAVIGATION_START_BEFORE` - Before the page sub navigation "start" sidebar position, also [can be scoped](#scoping-render-hooks) to the page or resource class
 - `PanelsRenderHook::PAGE_SUB_NAVIGATION_TOP_AFTER` - After the page sub navigation "top" tabs position, also [can be scoped](#scoping-render-hooks) to the page or resource class
@@ -33636,6 +33686,17 @@ ExportAction::make()
     ->modifyQueryUsing(fn (Builder $query) => $query->where('is_active', true))
 ```
 
+You may inject the `$options` argument into the function, which is an array of [options](#using-export-options) for that export:
+
+```php
+use App\Filament\Exports\ProductExporter;
+use Illuminate\Database\Eloquent\Builder;
+
+ExportAction::make()
+    ->exporter(ProductExporter::class)
+    ->modifyQueryUsing(fn (Builder $query, array $options) => $query->where('is_active', $options['isActive'] ?? true))
+```
+
 Alternatively, you can override the `modifyQuery()` method on the exporter class, which will modify the query for all actions that use that exporter:
 
 ```php
@@ -33676,6 +33737,8 @@ public function getFileDisk(): string
     return 's3';
 }
 ```
+
+Export files that are created are the developer's responsibility to delete if they wish. Filament does not delete these files in case the exports need to be downloaded again at a later date.
 
 ### Configuring the export file names
 
@@ -36458,6 +36521,25 @@ SpatieMediaLibraryImageColumn::make('avatar')
     ->conversion('thumb')
 ```
 
+### Filtering media
+
+It's possible to target the column to only display a subset of media in a collection. To do that, you can filter the media collection using the `filterMediaUsing()` method. This method accepts a function that receives the `$media` collection and manipulates it. You can use any [collection method](https://laravel.com/docs/collections#available-methods) to filter it.
+
+For example, you could scope the column to only display media that has certain custom properties:
+
+```php
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use Illuminate\Support\Collection;
+
+SpatieMediaLibraryImageColumn::make('images')
+    ->filterMediaUsing(
+        fn (Collection $media): Collection => $media->where(
+            'custom_properties.gallery_id',
+            12345,
+        ),
+    )
+```
+
 ## Infolist entry
 
 To use the media library image entry:
@@ -36501,6 +36583,25 @@ use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 
 SpatieMediaLibraryImageEntry::make('avatar')
     ->conversion('thumb')
+```
+
+### Filtering media
+
+It's possible to target the entry to only display a subset of media in a collection. To do that, you can filter the media collection using the `filterMediaUsing()` method. This method accepts a function that receives the `$media` collection and manipulates it. You can use any [collection method](https://laravel.com/docs/collections#available-methods) to filter it.
+
+For example, you could scope the entry to only display media that has certain custom properties:
+
+```php
+use Filament\Tables\Columns\SpatieMediaLibraryImageEntry;
+use Illuminate\Support\Collection;
+
+SpatieMediaLibraryImageEntry::make('images')
+    ->filterMediaUsing(
+        fn (Collection $media): Collection => $media->where(
+            'custom_properties.gallery_id',
+            12345,
+        ),
+    )
 ```
 
 
@@ -37200,19 +37301,16 @@ DatabaseNotifications::pollingInterval(null);
 
 Alternatively, the package has a native integration with [Laravel Echo](https://laravel.com/docs/broadcasting#client-side-installation). Make sure Echo is installed, as well as a [server-side websockets integration](https://laravel.com/docs/broadcasting#server-side-installation) like Pusher.
 
-Once websockets are set up, after sending a database notification you may dispatch a `DatabaseNotificationsSent` event, which will immediately fetch new notifications for that user:
+Once websockets are set up, you can automatically dispatch a `DatabaseNotificationsSent` event by setting the `isEventDispatched` parameter to `true` when sending the notification. This will trigger the immediate fetching of new notifications for the user:
 
 ```php
-use Filament\Notifications\Events\DatabaseNotificationsSent;
 use Filament\Notifications\Notification;
 
 $recipient = auth()->user();
 
 Notification::make()
     ->title('Saved successfully')
-    ->sendToDatabase($recipient);
-
-event(new DatabaseNotificationsSent($recipient));
+    ->sendToDatabase($recipient, isEventDispatched: true);
 ```
 
 ## Marking database notifications as read

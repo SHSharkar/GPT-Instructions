@@ -23,6 +23,8 @@ title: ref
 </div>
 <!-- END_VERBATIM -->
 
+> Despite not being included in the above snippet, `x-ref` cannot be used if no parent element has `x-data` defined. [→ Read more about `x-data`](/directives/data)
+
 
 
 ---
@@ -79,6 +81,8 @@ If `x-bind:` is too verbose for your liking, you can use the shorthand: `:`. For
 ```alpine
 <input type="text" :placeholder="placeholder">
 ```
+
+> Despite not being included in the above snippet, `x-bind` cannot be used if no parent element has `x-data` defined. [→ Read more about `x-data`](/directives/data)
 
 <a name="binding-classes"></a>
 ## Binding classes
@@ -218,7 +222,7 @@ And like most expressions in Alpine, you can always use the result of a JavaScri
 The object keys can be anything you would normally write as an attribute name in Alpine. This includes Alpine directives and modifiers, but also plain HTML attributes. The object values are either plain strings, or in the case of dynamic Alpine directives, callbacks to be evaluated by Alpine.
 
 ```alpine
-<div x-data="dropdown()">
+<div x-data="dropdown">
     <button x-bind="trigger">Open Dropdown</button>
 
     <span x-bind="dialogue">Dropdown Contents</span>
@@ -339,6 +343,8 @@ Now when the `<button>` is clicked, the input element's value will instantly be 
     </div>
 </div>
 <!-- END_VERBATIM -->
+
+> Despite not being included in the above snippet, `x-model` cannot be used if no parent element has `x-data` defined. [→ Read more about `x-data`](/directives/data)
 
 <a name="textarea-inputs"></a>
 ## Textarea inputs
@@ -740,9 +746,13 @@ Because of this difference in behavior, `x-if` should not be applied directly to
 </template>
 ```
 
-> Unlike `x-show`, `x-if`, does NOT support transitioning toggles with `x-transition`.
+> Despite not being included in the above snippet, `x-if` cannot be used if no parent element has `x-data` defined. [→ Read more about `x-data`](/directives/data)
 
-> Remember: `<template>` tags can only contain one root level element.
+## Caveats
+
+Unlike `x-show`, `x-if`, does NOT support transitioning toggles with `x-transition`.
+
+`<template>` tags can only contain one root element.
 
 
 
@@ -972,7 +982,7 @@ You may also pass objects to `x-for`.
 
 There are two rules worth noting about `x-for`:
 
->`x-for` MUST be declared on a `<template>` element.
+> `x-for` MUST be declared on a `<template>` element.
 > That `<template>` element MUST contain only one root element
 
 <a name="keys"></a>
@@ -1030,6 +1040,8 @@ If you need to simply loop `n` number of times, rather than iterate through an a
 ```
 
 `i` in this case can be named anything you like.
+
+> Despite not being included in the above snippet, `x-for` cannot be used if no parent element has `x-data` defined. [→ Read more about `x-data`](/directives/data)
 
 <a name="contents-of-a-template"></a>
 ## Contents of a `<template>`
@@ -1153,6 +1165,7 @@ title: id
 ---
 
 # x-id
+
 `x-id` allows you to declare a new "scope" for any new IDs generated using `$id()`. It accepts an array of strings (ID names) and adds a suffix to each `$id('...')` generated within it that is unique to other IDs on the page.
 
 `x-id` is meant to be used in conjunction with the `$id(...)` magic.
@@ -1179,7 +1192,7 @@ Here's a brief example of this directive in use:
 </div>
 ```
 
-
+> Despite not being included in the above snippet, `x-id` cannot be used if no parent element has `x-data` defined. [→ Read more about `x-data`](/directives/data)
 
 
 
@@ -1429,6 +1442,8 @@ Here's the same component as above, but using the shorthand syntax instead:
 ```alpine
 <button @click="alert('Hello World!')">Say Hi</button>
 ```
+
+> Despite not being included in the above snippet, `x-on` cannot be used if no parent element has `x-data` defined. [→ Read more about `x-data`](/directives/data)
 
 <a name="the-event-object"></a>
 ## The event object
@@ -1913,6 +1928,8 @@ If you wish to customize the durations specifically for entering and leaving, yo
     x-transition:leave.duration.400ms
 >
 ```
+
+> Despite not being included in the above snippet, `x-transition` cannot be used if no parent element has `x-data` defined. [→ Read more about `x-data`](/directives/data)
 
 <a name="customizing-delay"></a>
 ### Customizing delay
@@ -3148,6 +3165,8 @@ Let's walk through what's happening briefly:
 Everything in Alpine starts with an `x-data` directive. Inside of `x-data`, in plain JavaScript, you declare an object of data that Alpine will track.
 
 Every property inside this object will be made available to other directives inside this HTML element. In addition, when one of these properties changes, everything that relies on it will change as well.
+
+> `x-data` is required on a parent element for most Alpine directives to work.
 
 [→ Read more about `x-data`](/directives/data)
 
@@ -7033,7 +7052,7 @@ This is by far the simplest way to get started with Alpine. Include the followin
 Notice the `@3.x.x` in the provided CDN link. This will pull the latest version of Alpine version 3. For stability in production, it's recommended that you hardcode the latest version in the CDN link.
 
 ```alpine
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
 ```
 
 That's it! Alpine is now available for use inside your page.

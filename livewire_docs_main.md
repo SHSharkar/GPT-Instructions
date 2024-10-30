@@ -1594,7 +1594,7 @@ class PostForm extends Form
 
     public $content = '';
 
-    public function rules()
+    protected function rules()
     {
         return [
             'title' => [
@@ -1641,7 +1641,7 @@ class PostForm extends Form
 
     public $content = '';
 
-    public function rules()
+    protected function rules()
     {
         return [
             'title' => [
@@ -4796,7 +4796,7 @@ class CreatePost extends Component
 
     public $content = '';
 
-    public function rules()
+    protected function rules()
     {
         return [
             'title' => 'required|min:5',
@@ -4895,7 +4895,7 @@ class CreatePost extends Component
 
     public $content = '';
 
-    public function rules() // [tl! highlight:6]
+    protected function rules() // [tl! highlight:6]
     {
         return [
             'title' => Rule::exists('posts', 'title'),
@@ -4903,7 +4903,7 @@ class CreatePost extends Component
         ];
     }
 
-    public function messages() // [tl! highlight:6]
+    protected function messages() // [tl! highlight:6]
     {
         return [
             'content.required' => 'The :attribute are missing.',
@@ -4911,7 +4911,7 @@ class CreatePost extends Component
         ];
     }
 
-    public function validationAttributes() // [tl! highlight:6]
+    protected function validationAttributes() // [tl! highlight:6]
     {
         return [
             'content' => 'description',
@@ -4963,7 +4963,7 @@ class UpdatePost extends Form
 
     public $content = '';
 
-    public function rules()
+    protected function rules()
     {
         return [
             'title' => [
@@ -8355,6 +8355,18 @@ Livewire.hook('morph.added',  ({ el }) => {
 })
 ```
 
+In addition to the events fired per element, a `morph` and `morphed` event is fired for each Livewire component:
+
+```js
+Livewire.hook('morph',  ({ el, component }) => {
+	// Runs just before the child elements in `component` are morphed
+})
+
+Livewire.hook('morphed',  ({ el, component }) => {
+    // Runs after all child elements in `component` are morphed
+})
+```
+
 ### Commit hooks
 
 Because Livewire requests contain multiple components, _request_ is too broad of a term to refer to an individual component's request and response payload. Instead, internally, Livewire refers to component updates as _commits_ — in reference to _committing_ component state to the server.
@@ -8401,7 +8413,7 @@ Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
 If you would like to instead hook into the entire HTTP request going and returning from the server, you can do so using the `request` hook:
 
 ```js
-Livewire.hook('request', ({ uri, options, payload, respond, succeed, fail }) => {
+Livewire.hook('request', ({ url, options, payload, respond, succeed, fail }) => {
     // Runs after commit payloads are compiled, but before a network request is sent...
 
     respond(({ status, response }) => {
@@ -10015,7 +10027,7 @@ Supported PHP types:
 | BackedEnum | `BackedEnum` |
 | Collection | `Illuminate\Support\Collection` |
 | Eloquent Collection | `Illuminate\Database\Eloquent\Collection` |
-| Model | `Illuminate\Database\Model` |
+| Model | `Illuminate\Database\Eloquent\Model` |
 | DateTime | `DateTime` |
 | Carbon | `Carbon\Carbon` |
 | Stringable | `Illuminate\Support\Stringable` |
@@ -14585,7 +14597,7 @@ class UpdatePost extends Component
     {
         // ...
 
-        $this->dispatch('post-updated.{$post->id}'); // [tl! highlight]
+        $this->dispatch("post-updated.{$post->id}"); // [tl! highlight]
     }
 }
 ```

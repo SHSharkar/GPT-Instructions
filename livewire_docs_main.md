@@ -12702,7 +12702,7 @@ Just like controller request input, it's imperative to authorize action paramete
 
 Below is a `ShowPosts` component where users can view all their posts on one page. They can delete any post they like using one of the post's "Delete" buttons.
 
-Here is a vulnerable version of component:
+Here is a vulnerable version of the component:
 
 ```php
 <?php
@@ -15539,7 +15539,7 @@ By default, Livewire persists the following middleware across network requests:
 
 If any of the above middlewares are applied to the initial page-load, they will be persisted (re-applied) to any future network requests.
 
-However, if you are applying a custom middleware from your application the initial page-load, and want it persisted between Livewire requests, you will need to add it to this list from a [Service Provider](https://laravel.com/docs/providers#main-content) in your app like so:
+However, if you are applying a custom middleware from your application on the initial page-load, and want it persisted between Livewire requests, you will need to add it to this list from a [Service Provider](https://laravel.com/docs/providers#main-content) in your app like so:
 
 ```php
 <?php

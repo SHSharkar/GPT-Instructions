@@ -10236,6 +10236,21 @@ Builder::make('content')
     ->addActionLabel('Add a new block')
 ```
 
+### Aligning the add action button
+
+By default, the add action is aligned in the center. You may adjust this using the `addActionAlignment()` method, passing an `Alignment` option of `Alignment::Start` or `Alignment::End`:
+
+```php
+use Filament\Forms\Components\Builder;
+use Filament\Support\Enums\Alignment;
+
+Builder::make('content')
+    ->schema([
+        // ...
+    ])
+    ->addActionAlignment(Alignment::Start)
+```
+
 ### Preventing the user from adding items
 
 You may prevent the user from adding items to the builder using the `addable(false)` method:
@@ -11843,6 +11858,26 @@ class App extends Model
 }
 ```
 
+## Allowing HTML in the option labels
+
+By default, Filament will escape any HTML in the option labels. If you'd like to allow HTML, you can use the `allowHtml()` method:
+
+```php
+use Filament\Forms\Components\CheckboxList;
+
+CheckboxList::make('technology')
+    ->options([
+        'tailwind' => '<span class="text-blue-500">Tailwind</span>',
+        'alpine' => '<span class="text-green-500">Alpine</span>',
+        'laravel' => '<span class="text-red-500">Laravel</span>',
+        'livewire' => '<span class="text-pink-500">Livewire</span>',
+    ])
+    ->searchable()
+    ->allowHtml()
+```
+
+Be aware that you will need to ensure that the HTML is safe to render, otherwise your application will be vulnerable to XSS attacks.
+
 ## Setting option descriptions
 
 You can optionally provide descriptions to each option using the `descriptions()` method. This method accepts an array of plain text strings, or instances of `Illuminate\Support\HtmlString` or `Illuminate\Contracts\Support\Htmlable`. This allows you to render HTML, or even markdown, in the descriptions:
@@ -12579,6 +12614,33 @@ use Filament\Forms\Components\FileUpload;
 FileUpload::make('attachment')
     ->minSize(512)
     ->maxSize(1024)
+```
+
+#### Uploading large files
+
+If you experience issues when uploading large files, such as HTTP requests failing with a response status of 422 in the browser's console, you may need to tweak your configuration.
+
+In the `php.ini` file for your server, increasing the maximum file size may fix the issue:
+
+```ini
+post_max_size = 120M
+upload_max_filesize = 120M
+```
+
+Livewire also validates file size before uploading. To publish the Livewire config file, run:
+
+```bash
+php artisan livewire:publish --config
+```
+
+The [max upload size can be adjusted in the `rules` key of `temporary_file_upload`]((https://livewire.laravel.com/docs/uploads#global-validation)). In this instance, KB are used in the rule, and 120MB is 122880KB:
+
+```php
+'temporary_file_upload' => [
+    // ...
+    'rules' => ['required', 'file', 'max:122880'],
+    // ...
+],
 ```
 
 ### Number of files validation
@@ -19164,6 +19226,12 @@ class User extends Authenticatable implements FilamentUser
 
 Learn more about [users](users).
 
+### Using a production-ready storage disk
+
+Filament has a storage disk defined in the [configuration](#publishing-configuration), which by default is set to `public`. You can set the `FILAMENT_FILESYSTEM_DISK` environment variable to change this.
+
+The `public` disk, while great for easy local development, is not suitable for production. It does not support file visibility, so features of Filament such as [file uploads](../forms/fields/file-upload) will create public files. In production, you need to use a production-ready disk such as `s3` with a private access policy, to prevent unauthorized access to the uploaded files.
+
 ## Publishing configuration
 
 You can publish the Filament package configuration (if needed) using the following command:
@@ -24085,7 +24153,7 @@ When using simple resources, remove the `CanCreateRecords`, `CanDeleteRecords`, 
 
 We also deprecated type-specific relation manager classes. Any classes extending `BelongsToManyRelationManager`, `HasManyRelationManager`, `HasManyThroughRelationManager`, `MorphManyRelationManager`, or `MorphToManyRelationManager` should now extend `\Filament\Resources\RelationManagers\RelationManager`. You can also remove the `CanAssociateRecords`, `CanAttachRecords`, `CanCreateRecords`, `CanDeleteRecords`, `CanDetachRecords`, `CanDisassociateRecords`, `CanEditRecords`, and `CanViewRecords` traits from relation managers.
 
-To learn more about v2.13 changes, read our [blog post](https://filamentphp.com/blog/v2130-admin-resources).
+To learn more about v2.13 changes, read our [blog post](https://v2.filamentphp.com/blog/v2130-admin-resources).
 
 #### Blade components
 
@@ -33719,7 +33787,11 @@ public static function modifyQuery(Builder $query): Builder
 
 ### Customizing the storage disk
 
-By default, exported files will be uploaded to the storage disk defined in the [configuration file](../installation#publishing-configuration). You can also set the `FILAMENT_FILESYSTEM_DISK` environment variable to change this.
+By default, exported files will be uploaded to the storage disk defined in the [configuration file](../installation#publishing-configuration), which is `public` by default. You can set the `FILAMENT_FILESYSTEM_DISK` environment variable to change this.
+
+While using the `public` disk a good default for many parts of Filament, using it for exports would result in exported files being stored in a public location. As such, if the default filesystem disk is `public` and a `local` disk exists in your `config/filesystems.php`, Filament will use the `local` disk for exports instead. If you override the disk to be `public` for an `ExportAction` or inside an exporter class, Filament will use that.
+
+In production, you should use a disk such as `s3` with a private access policy, to prevent unauthorized access to the exported files.
 
 If you want to use a different disk for a specific export, you can pass the disk name to the `disk()` method on the action:
 
@@ -33727,6 +33799,14 @@ If you want to use a different disk for a specific export, you can pass the disk
 ExportAction::make()
     ->exporter(ProductExporter::class)
     ->fileDisk('s3')
+```
+
+You may set the disk for all export actions at once in the `boot()` method of a service provider such as `AppServiceProvider`:
+
+```php
+use Filament\Actions\ExportAction;
+
+ExportAction::configureUsing(fn (ExportAction $action) => $action->fileDisk('s3'));
 ```
 
 Alternatively, you can override the `getFileDisk()` method on the exporter class, returning the name of the disk:

@@ -84,9 +84,9 @@ Sometimes you may wish to limit the attributes, such as passwords, that are incl
     class User extends Model
     {
         /**
-         * The attributes that should be hidden for arrays.
+         * The attributes that should be hidden for serialization.
          *
-         * @var array
+         * @var array<string>
          */
         protected $hidden = ['password'];
     }
@@ -3981,9 +3981,6 @@ Using the `Route::fallback` method, you may define a route that will be executed
         // ...
     });
 
-> [!WARNING]  
-> The fallback route should always be the last route registered by your application.
-
 <a name="rate-limiting"></a>
 ## Rate Limiting
 
@@ -4633,6 +4630,7 @@ THE SOFTWARE.
     - [Running Tasks on One Server](#running-tasks-on-one-server)
     - [Background Tasks](#background-tasks)
     - [Maintenance Mode](#maintenance-mode)
+    - [Schedule Groups](#schedule-groups)
 - [Running the Scheduler](#running-the-scheduler)
     - [Sub-Minute Scheduled Tasks](#sub-minute-scheduled-tasks)
     - [Running the Scheduler Locally](#running-the-scheduler-locally)
@@ -4985,6 +4983,25 @@ By default, multiple tasks scheduled at the same time will execute sequentially 
 Your application's scheduled tasks will not run when the application is in [maintenance mode](/docs/{{version}}/configuration#maintenance-mode), since we don't want your tasks to interfere with any unfinished maintenance you may be performing on your server. However, if you would like to force a task to run even in maintenance mode, you may call the `evenInMaintenanceMode` method when defining the task:
 
     Schedule::command('emails:send')->evenInMaintenanceMode();
+
+<a name="schedule-groups"></a>
+### Schedule Groups
+
+When defining multiple scheduled tasks with similar configurations, you can use Laravel’s task grouping feature to avoid repeating the same settings for each task. Grouping tasks simplifies your code and ensures consistency across related tasks.
+
+To create a group of scheduled tasks, invoke the desired task configuration methods, followed by the `group` method. The `group` method accepts a closure that is responsible for defining the tasks that share the specified configuration:
+
+```php
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::daily()
+    ->onOneServer()
+    ->timezone('America/New_York')
+    ->group(function () {
+        Schedule::command('emails:send --force');
+        Schedule::command('emails:prune');
+    });
+```
 
 <a name="running-the-scheduler"></a>
 ## Running the Scheduler
@@ -14390,10 +14407,10 @@ However, if you wish, you may enable or disable specific rules in your `pint.jso
     "preset": "laravel",
     "rules": {
         "simplified_null_return": true,
-        "braces": false,
-        "new_with_braces": {
-            "anonymous_class": false,
-            "named_class": false
+        "array_indentation": false,
+        "new_with_parentheses": {
+            "anonymous_class": true,
+            "named_class": true
         }
     }
 }
@@ -14509,8 +14526,8 @@ For all Laravel releases, bug fixes are provided for 18 months and security fixe
 | --- | --- | --- | --- | --- |
 | 9 | 8.0 - 8.2 | February 8th, 2022 | August 8th, 2023 | February 6th, 2024 |
 | 10 | 8.1 - 8.3 | February 14th, 2023 | August 6th, 2024 | February 4th, 2025 |
-| 11 | 8.2 - 8.3 | March 12th, 2024 | September 3rd, 2025 | March 12th, 2026 |
-| 12 | 8.2 - 8.3 | Q1 2025 | Q3 2026 | Q1 2027 |
+| 11 | 8.2 - 8.4 | March 12th, 2024 | September 3rd, 2025 | March 12th, 2026 |
+| 12 | 8.2 - 8.4 | Q1 2025 | Q3 2026 | Q1 2027 |
 
 </div>
 
@@ -16211,15 +16228,17 @@ In addition to the `Storage` attribute, Laravel offers `Auth`, `Cache`, `Config`
 
 namespace App\Http\Controllers;
 
+use App\Models\Photo;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Container\Attributes\Cache;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Container\Attributes\DB;
 use Illuminate\Container\Attributes\Log;
+use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Container\Attributes\Tag;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Cache\Repository;
-use Illuminate\Contracts\Database\Connection;
+use Illuminate\Database\Connection;
 use Psr\Log\LoggerInterface;
 
 class PhotoController extends Controller
@@ -16230,6 +16249,7 @@ class PhotoController extends Controller
         #[Config('app.timezone')] protected string $timezone,
         #[DB('mysql')] protected Connection $connection,
         #[Log('daily')] protected LoggerInterface $log,
+        #[RouteParameter('photo')] protected Photo $photo,
         #[Tag('reports')] protected iterable $reports,
     )
     {
@@ -21260,6 +21280,18 @@ The `pull` method may be used to retrieve information from the context and immed
 $value = Context::pull('key');
 ```
 
+If context data is stored in a [stack](#stacks), you may pop items from the stack using the `pop` method:
+
+```php
+Context::push('breadcrumbs', 'first_value', 'second_value');
+
+Context::pop('breadcrumbs')
+// second_value
+
+Context::get('breadcrumbs');
+// ['first_value'] 
+```
+
 If you would like to retrieve all of the information stored in the context, you may invoke the `all` method:
 
 ```php
@@ -21336,6 +21368,7 @@ Context::addHiddenIf(/* ... */);
 Context::pushHidden(/* ... */);
 Context::getHidden(/* ... */);
 Context::pullHidden(/* ... */);
+Context::popHidden(/* ... */);
 Context::onlyHidden(/* ... */);
 Context::allHidden(/* ... */);
 Context::hasHidden(/* ... */);
@@ -23026,7 +23059,7 @@ So, to get started, you should define which model attributes you want to make ma
         /**
          * The attributes that are mass assignable.
          *
-         * @var array
+         * @var array<int, string>
          */
         protected $fillable = ['name'];
     }
@@ -23047,7 +23080,7 @@ When assigning JSON columns, each column's mass assignable key must be specified
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
         'options->enabled',
@@ -23061,7 +23094,7 @@ If you would like to make all of your attributes mass assignable, you may define
     /**
      * The attributes that aren't mass assignable.
      *
-     * @var array
+     * @var array<string>|bool
      */
     protected $guarded = [];
 
@@ -31255,7 +31288,7 @@ If you would like to customize the query executed by the validation rule, you ma
         'email' => [
             'required',
             Rule::exists('staff')->where(function (Builder $query) {
-                return $query->where('account_id', 1);
+                $query->where('account_id', 1);
             }),
         ],
     ]);
@@ -39024,6 +39057,12 @@ Input values that correspond to [PHP enums](https://www.php.net/manual/en/langua
     use App\Enums\Status;
 
     $status = $request->enum('status', Status::class);
+
+If the input value is an array of values that correspond to a PHP enum, you may use the `enums` method to retrieve the array of values as enum instances:
+
+    use App\Enums\Product;
+
+    $products = $request->enums('products', Product::class);
 
 <a name="retrieving-input-via-dynamic-properties"></a>
 #### Retrieving Input via Dynamic Properties
@@ -47054,7 +47093,7 @@ Additionally, the retention policy for the `daily` channel can be configured via
 
 | Name   | Description                                                 | Default |
 | ------ | ----------------------------------------------------------- | ------- |
-| `days` | The number of days that daily log files should be retained. | `7`     |
+| `days` | The number of days that daily log files should be retained. | `14`    |
 
 </div>
 
@@ -51631,6 +51670,15 @@ If you would like to specify a fallback URL pattern that will stub all unmatched
         '*' => Http::response('Hello World', 200, ['Headers']),
     ]);
 
+<a name="faking-connection-exceptions"></a>
+#### Faking Connection Exceptions
+
+Sometimes you may need to test your application's behavior if the HTTP client encounters an `Illuminate\Http\Client\ConnectionException` when attempting to make a request. You can instruct the HTTP client to throw a connection exception using the `failedConnection` method:
+
+    Http::fake([
+        'github.com/*' => Http::failedConnection(),
+    ]);
+
 <a name="faking-response-sequences"></a>
 #### Faking Response Sequences
 
@@ -52552,6 +52600,7 @@ The `stateless` method may be used to disable session state verification. This i
     - [Executing Node / NPM Commands](#executing-node-npm-commands)
 - [Interacting With Databases](#interacting-with-sail-databases)
     - [MySQL](#mysql)
+    - [MongoDB](#mongodb)
     - [Redis](#redis)
     - [Meilisearch](#meilisearch)
     - [Typesense](#typesense)
@@ -52732,11 +52781,11 @@ docker run --rm \
     -u "$(id -u):$(id -g)" \
     -v "$(pwd):/var/www/html" \
     -w /var/www/html \
-    laravelsail/php83-composer:latest \
+    laravelsail/php84-composer:latest \
     composer install --ignore-platform-reqs
 ```
 
-When using the `laravelsail/phpXX-composer` image, you should use the same version of PHP that you plan to use for your application (`80`, `81`, `82`, or `83`).
+When using the `laravelsail/phpXX-composer` image, you should use the same version of PHP that you plan to use for your application (`80`, `81`, `82`, `83`, or `84`).
 
 <a name="executing-artisan-commands"></a>
 ### Executing Artisan Commands
@@ -52777,6 +52826,23 @@ In addition, the first time the MySQL container starts, it will create two datab
 Once you have started your containers, you may connect to the MySQL instance within your application by setting your `DB_HOST` environment variable within your application's `.env` file to `mysql`.
 
 To connect to your application's MySQL database from your local machine, you may use a graphical database management application such as [TablePlus](https://tableplus.com). By default, the MySQL database is accessible at `localhost` port 3306 and the access credentials correspond to the values of your `DB_USERNAME` and `DB_PASSWORD` environment variables. Or, you may connect as the `root` user, which also utilizes the value of your `DB_PASSWORD` environment variable as its password.
+
+<a name="mongodb"></a>
+### MongoDB
+
+If you chose to install the [MongoDB](https://www.mongodb.com/) service when installing Sail, your application's `docker-compose.yml` file contains an entry for a [MongoDB Atlas Local](https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-local-cloud/) container which provides the MongoDB document database with Atlas features like [Search Indexes](https://www.mongodb.com/docs/atlas/atlas-search/). This container uses a [Docker volume](https://docs.docker.com/storage/volumes/) so that the data stored in your database is persisted even when stopping and restarting your containers.
+
+Once you have started your containers, you may connect to the MongoDB instance within your application by setting your `MONGODB_URI` environment variable within your application's `.env` file to `mongodb://mongodb:27017`. Authentication is disabled by default, but you can set the `MONGODB_USERNAME` and `MONGODB_PASSWORD` environment variables to enable authentication before starting the `mongodb` container. Then, add the credentials to the connection string:
+
+```ini
+MONGODB_USERNAME=user
+MONGODB_PASSWORD=laravel
+MONGODB_URI=mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@mongodb:27017
+```
+
+For seamless integration of MongoDB with your application, you can install the [official package maintained by MongoDB](https://www.mongodb.com/docs/drivers/php/laravel-mongodb/).
+
+To connect to your application's MongoDB database from your local machine, you may use a graphical interface such as [Compass](https://www.mongodb.com/products/tools/compass). By default, the MongoDB database is accessible at `localhost` port `27017`.
 
 <a name="redis"></a>
 ### Redis
@@ -52937,9 +53003,12 @@ sail tinker
 <a name="sail-php-versions"></a>
 ## PHP Versions
 
-Sail currently supports serving your application via PHP 8.3, 8.2, 8.1, or PHP 8.0. The default PHP version used by Sail is currently PHP 8.3. To change the PHP version that is used to serve your application, you should update the `build` definition of the `laravel.test` container in your application's `docker-compose.yml` file:
+Sail currently supports serving your application via PHP 8.4, 8.3, 8.2, 8.1, or PHP 8.0. The default PHP version used by Sail is currently PHP 8.4. To change the PHP version that is used to serve your application, you should update the `build` definition of the `laravel.test` container in your application's `docker-compose.yml` file:
 
 ```yaml
+# PHP 8.4
+context: ./vendor/laravel/sail/runtimes/8.4
+
 # PHP 8.3
 context: ./vendor/laravel/sail/runtimes/8.3
 
@@ -60422,6 +60491,7 @@ If you don't have PHP and Composer installed on your local machine, the followin
 ```
 
 ```shell tab=Windows PowerShell
+# Run as administrator...
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://php.new/install/windows'))
 ```
 
@@ -66837,6 +66907,9 @@ test('albums can be uploaded', function () {
     Storage::disk('photos')->assertMissing('missing.jpg');
     Storage::disk('photos')->assertMissing(['missing.jpg', 'non-existing.jpg']);
 
+    // Assert that the number of files in a given directory matches the expected count...
+    Storage::disk('photos')->assertCount('/wallpapers', 2);
+
     // Assert that a given directory is empty...
     Storage::disk('photos')->assertDirectoryEmpty('/wallpapers');
 });
@@ -66869,6 +66942,9 @@ class ExampleTest extends TestCase
         // Assert one or more files were not stored...
         Storage::disk('photos')->assertMissing('missing.jpg');
         Storage::disk('photos')->assertMissing(['missing.jpg', 'non-existing.jpg']);
+
+        // Assert that the number of files in a given directory matches the expected count...
+        Storage::disk('photos')->assertCount('/wallpapers', 2);
 
         // Assert that a given directory is empty...
         Storage::disk('photos')->assertDirectoryEmpty('/wallpapers');
@@ -66971,6 +67047,7 @@ Once you have created and registered the extension's service provider, you may u
 - [Adding Custom Pennant Drivers](#adding-custom-pennant-drivers)
     - [Implementing the Driver](#implementing-the-driver)
     - [Registering the Driver](#registering-the-driver)
+    - [Defining Features Externally](#defining-features-externally)
 - [Events](#events)
 
 <a name="introduction"></a>
@@ -67965,7 +68042,7 @@ class RedisFeatureDriver implements Driver
 
 Now, we just need to implement each of these methods using a Redis connection. For an example of how to implement each of these methods, take a look at the `Laravel\Pennant\Drivers\DatabaseDriver` in the [Pennant source code](https://github.com/laravel/pennant/blob/1.x/src/Drivers/DatabaseDriver.php)
 
-> [!NOTE]  
+> [!NOTE]
 > Laravel does not ship with a directory to contain your extensions. You are free to place them anywhere you like. In this example, we have created an `Extensions` directory to house the `RedisFeatureDriver`.
 
 <a name="registering-the-driver"></a>
@@ -68017,6 +68094,32 @@ Once the driver has been registered, you may use the `redis` driver in your appl
         // ...
 
     ],
+
+<a name="defining-features-externally"></a>
+### Defining Features Externally
+
+If your driver is a wrapper around a third-party feature flag platform, you will likely define features on the platform rather than using Pennant's `Feature::define` method. If that is the case, your custom driver should also implement the `Laravel\Pennant\Contracts\DefinesFeaturesExternally` interface:
+
+```php
+<?php
+
+namespace App\Extensions;
+
+use Laravel\Pennant\Contracts\Driver;
+use Laravel\Pennant\Contracts\DefinesFeaturesExternally;
+
+class FeatureFlagServiceDriver implements Driver, DefinesFeaturesExternally
+{
+    /**
+     * Get the features defined for the given scope.
+     */
+    public function definedFeaturesForScope(mixed $scope): array {}
+
+    /* ... */
+}
+```
+
+The `definedFeaturesForScope` method should return a list of feature names defined for the provided scope.
 
 <a name="events"></a>
 ## Events

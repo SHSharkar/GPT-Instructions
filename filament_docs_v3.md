@@ -9393,7 +9393,7 @@ it('can send invoices', function () {
         'invoice' => $invoice,
     ])
         ->mountFormComponentAction('customer_id', 'send')
-        ->setFormComponentActionData('customer_id', 'send', data: [
+        ->setFormComponentActionData([
             'email' => $email = fake()->email(),
         ])
 });
@@ -20244,6 +20244,29 @@ protected function mutateFormDataBeforeFill(array $data): array
 
 Alternatively, if you're viewing records in a modal action, check out the [Actions documentation](../../actions/prebuilt-actions/view#customizing-data-before-filling-the-form).
 
+## Lifecycle hooks
+
+Hooks may be used to execute code at various points within a page's lifecycle, like before a form is filled. To set up a hook, create a protected method on the View page class with the name of the hook:
+
+```php
+use Filament\Resources\Pages\ViewRecord;
+
+class ViewUser extends ViewRecord
+{
+    // ...
+
+    protected function beforeFill(): void
+    {
+        // Runs before the disabled form fields are populated from the database. Not run on pages using an infolist.
+    }
+
+    protected function afterFill(): void
+    {
+        // Runs after the disabled form fields are populated from the database. Not run on pages using an infolist.
+    }
+}
+```
+
 ## Authorization
 
 For authorization, Filament will observe any [model policies](https://laravel.com/docs/authorization#creating-policies) that are registered in your app.
@@ -25102,7 +25125,7 @@ it('can send invoices', function () {
         'invoice' => $invoice,
     ])
         ->mountInfolistAction('customer', 'send')
-        ->setInfolistActionData('customer', 'send', data: [
+        ->setInfolistActionData([
             'email' => $email = fake()->email(),
         ])
 });
@@ -28112,7 +28135,7 @@ Now that the default set exists in the config file, you can simply put any icons
 
 ## Replacing the default icons
 
-Filament includes an icon management system that allows you to replace any icons are used by default in the UI with your own. This happens in the `boot()` method of any service provider, like `AppServiceProvider`, or even a dedicated service provider for icons. If you wanted to build a plugin to replace Heroicons with a different set, you could absolutely do that by creating a Laravel package with a similar service provider.
+Filament includes an icon management system that allows you to replace any icons that are used by default in the UI with your own. This happens in the `boot()` method of any service provider, like `AppServiceProvider`, or even a dedicated service provider for icons. If you wanted to build a plugin to replace Heroicons with a different set, you could absolutely do that by creating a Laravel package with a similar service provider.
 
 To replace an icon, you can use the `FilamentIcon` facade. It has a `register()` method, which accepts an array of icons to replace. The key of the array is the unique [icon alias](#available-icon-aliases) that identifies the icon in the Filament UI, and the value is name of a Blade icon to replace it instead. Alternatively, you may use HTML instead of an icon name to render an icon from a Blade view for example:
 
@@ -34975,7 +34998,7 @@ it('can send invoices', function () {
         'invoice' => $invoice,
     ])
         ->mountAction('send')
-        ->setActionData('send', data: [
+        ->setActionData([
             'email' => $email = fake()->email(),
         ])
 });
@@ -38597,6 +38620,30 @@ To disable this behavior, you may override the `$isLazy` property on the widget 
 
 ```php
 protected static bool $isLazy = false;
+```
+
+## Adding a heading and description
+
+You may also add heading and description text above the widget by overriding the `$heading` and `$description` properties:
+
+```php
+protected ?string $heading = 'Analytics';
+
+protected ?string $description = 'An overview of some analytics.';
+```
+
+If you need to dynamically generate the heading or description text, you can instead override the `getHeading()` and `getDescription()` methods:
+
+```php
+protected function getHeading(): ?string
+{
+    return 'Analytics';
+}
+
+protected function getDescription(): ?string
+{
+    return 'An overview of some analytics.';
+}
 ```
 
 
